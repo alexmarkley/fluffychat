@@ -1,0 +1,13 @@
+name: Demonstrate a functional crosscompile for arm64 on a standard x86_64 runner.
+
+on: workflow_dispatch
+
+jobs:
+  build_linux_arm64:
+    runs-on: linux-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - run: pwd
+      - run: ls -lha
+      - run: echo hello world
+
