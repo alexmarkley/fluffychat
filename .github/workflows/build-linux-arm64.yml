@@ -9,5 +9,12 @@ jobs:
       - uses: actions/checkout@v4
       - run: pwd
       - run: ls -lha
-      - run: echo hello world
+      - run: "echo hello world ${HOME}"
+      - name: Install bootstrap dependencies.
+        run: sudo apt-get update && sudo apt-get -y install debootstrap binfmt-support qemu-user-static
+      - name: Set chroot path.
+        run: echo "ARM64_CHROOT=${HOME}/ubuntu-22.04-arm64" >> "$GITHUB_ENV"
+      - name: Make chroot path
+        run: sudo mkdir "${ARM64_CHROOT}"
+
 
