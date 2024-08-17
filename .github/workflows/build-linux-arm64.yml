@@ -1,10 +1,10 @@
-name: Demonstrate a functional crosscompile for arm64 on a standard x86_64 runner.
+name: Build Linux arm64 (Cross compile from x86_64.) 
 
 on: workflow_dispatch
 
 jobs:
   build_linux_arm64:
-    runs-on: linux-arm64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: pwd
