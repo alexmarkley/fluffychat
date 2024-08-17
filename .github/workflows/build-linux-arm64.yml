@@ -16,5 +16,10 @@ jobs:
         run: echo "ARM64_CHROOT=${HOME}/ubuntu-22.04-arm64" >> "$GITHUB_ENV"
       - name: Make chroot path
         run: sudo mkdir "${ARM64_CHROOT}"
-
+      - name: Bootstrap ubuntu 22.04 LTS arm64 into chroot
+        run: sudo debootstrap --arch=arm64 jammy "${ARM64_CHROOT}" http://ports.ubuntu.com/ubuntu-ports
+      - name: Do bind mounts
+        run: bash -c "for f in dev dev/pts sys proc run ; do sudo mount --bind /$f ${ARM64_CHROOT}/$f ; done"
+      - name: Launch build within chroot
+        run: sudo chroot "${ARM64_CHROOT}" /bin/bash -c "uname -a"
 
