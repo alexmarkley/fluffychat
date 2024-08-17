@@ -1,4 +1,4 @@
-name: Build Linux arm64 (Cross compile from x86_64.) 
+name: Build Linux arm64 (Cross compile.)
 
 on: workflow_dispatch
 
@@ -7,9 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pwd
-      - run: ls -lha
-      - run: "echo hello world ${HOME}"
+      - name: Remember checkout path.
+        run: echo "FLUFFYCHAT_HOME=$(pwd)" >> "$GITHUB_ENV"
       - name: Install bootstrap dependencies.
         run: sudo apt-get update && sudo apt-get -y install debootstrap binfmt-support qemu-user-static
       - name: Set chroot path.
@@ -18,8 +17,19 @@ jobs:
         run: sudo mkdir "${ARM64_CHROOT}"
       - name: Bootstrap ubuntu 22.04 LTS arm64 into chroot
         run: sudo debootstrap --arch=arm64 jammy "${ARM64_CHROOT}" http://ports.ubuntu.com/ubuntu-ports
-      - name: Do bind mounts
+      - name: Do system bind mounts
         run: bash -c "for f in dev dev/pts sys proc run ; do sudo mount --bind /$f ${ARM64_CHROOT}/$f ; done"
+      - name: Mount checkout path into the chroot.
+        run: sudo mkdir "${ARM64_CHROOT}"/root/fluffychat && sudo mount --bind "${FLUFFYCHAT_HOME}" "${ARM64_CHROOT}"/root/fluffychat
+      - name: Fixup chroot sources.list
+        run: sudo chroot "${ARM64_CHROOT}" /bin/bash -c "truncate -s 0 /etc/apt/sources.list && for i in jammy jammy-updates jammy-security jammy-backports ; do echo \"deb http://ports.ubuntu.com/ubuntu-ports $i main universe\" | tee -a /etc/apt/sources.list ; done"
+      - name: Install dependencies within the chroot.
+        run: sudo chroot "${ARM64_CHROOT}" /bin/bash -c "apt-get update && apt-get -y upgrade && apt-get -y install git curl unzip xz-utils zip libglu1-mesa build-essential cmake clang ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libblkid-dev libjsoncpp-dev libsecret-1-dev libsecret-1-0 librhash0 libssl-dev"
       - name: Launch build within chroot
-        run: sudo chroot "${ARM64_CHROOT}" /bin/bash -c "uname -a"
+        run: sudo chroot "${ARM64_CHROOT}" /root/fluffychat/scripts/build-linux-arm64.sh
+      - name: Archive build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluffychat-linux-arm64
+          path: fluffychat-linux-arm64.tar.gz
 
